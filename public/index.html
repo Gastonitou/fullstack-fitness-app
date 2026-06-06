@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fullstack Fitness 💪</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: white;
+      min-height: 100vh;
+    }
+    .container { max-width: 500px; margin: 0 auto; padding: 16px; padding-bottom: 90px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
+    .header h1 { font-size: 22px; }
+    .header h1 span { color: #e94560; }
+    .auth-buttons { display: flex; gap: 8px; }
+    .auth-buttons button {
+      padding: 8px 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+      background: transparent; color: white; font-size: 13px; cursor: pointer;
+    }
+    .auth-buttons button:active { background: rgba(255,255,255,0.1); }
+    .user-info { display: none; align-items: center; gap: 10px; font-size: 14px; }
+    .user-info .logout-btn {
+      padding: 6px 12px; border: none; border-radius: 6px; background: #e94560; color: white; font-size: 12px; cursor: pointer;
+    }
+
+    /* Quote */
+    .quote-card {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      border-radius: 16px; padding: 20px; margin: 12px 0; text-align: center;
+    }
+    .quote-card .q-text { font-size: 18px; font-weight: 700; line-height: 1.4; }
+    .quote-card .q-author { color: #e94560; font-size: 13px; margin-top: 6px; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .stat-card {
+      background: #1a1a1a; border-radius: 12px; padding: 14px 8px; text-align: center;
+      border: 1px solid #222;
+    }
+    .stat-card .num { font-size: 22px; font-weight: 800; color: #e94560; }
+    .stat-card .label { font-size: 10px; color: #888; margin-top: 4px; }
+
+    /* Section */
+    .section-title { font-size: 18px; font-weight: 700; margin: 16px 0 10px; }
+
+    /* Categories */
+    .cats { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px; }
+    .cats::-webkit-scrollbar { display: none; }
+    .cat-btn {
+      padding: 8px 18px; border-radius: 20px; border: 1px solid #333; background: #1a1a1a;
+      color: #ccc; font-size: 13px; cursor: pointer; white-space: nowrap;
+    }
+    .cat-btn.active { background: #e94560; border-color: #e94560; color: white; }
+
+    /* Exercise List */
+    .ex-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .ex-card {
+      display: flex; align-items: center; gap: 12px;
+      background: #1a1a1a; border: 1px solid #222; border-radius: 14px; padding: 14px;
+    }
+    .ex-card .icon {
+      width: 44px; height: 44px; background: #222; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .ex-card .info { flex: 1; }
+    .ex-card .info h3 { font-size: 15px; }
+    .ex-card .info p { font-size: 12px; color: #888; margin-top: 2px; }
+    .ex-card .info .specs { font-size: 12px; color: #e94560; margin-top: 2px; }
+    .ex-card .track-btn {
+      padding: 6px 14px; border: none; border-radius: 8px; background: #e94560;
+      color: white; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+
+    /* Progress Form (Modal) */
+    .modal-overlay {
+      display: none; position: fixed; top:0;left:0;right:0;bottom:0;
+      background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: #1a1a2e; border-radius: 20px; padding: 24px; width: 90%; max-width: 360px;
+    }
+    .modal h2 { font-size: 20px; margin-bottom: 12px; }
+    .modal input {
+      width: 100%; padding: 10px 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; background: rgba(255,255,255,0.08); color: white; font-size: 14px; outline: none;
+    }
+    .modal .row { display: flex; gap: 8px; }
+    .modal .row input { flex: 1; }
+    .modal button {
+      width: 100%; padding: 10px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
+      background: #e94560; color: white; cursor: pointer; margin-top: 6px;
+    }
+    .modal .cancel-btn { background: #333; margin-top: 4px; }
+
+    /* History */
+    .history-list { display: flex; flex-direction: column; gap: 6px; }
+    .history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; background: #1a1a1a; border-radius: 10px; border: 1px solid #222;
+    }
+    .history-item .ex-name { font-size: 14px; font-weight: 600; }
+    .history-item .ex-detail { font-size: 12px; color: #888; }
+    .history-item .ex-date { font-size: 11px; color: #555; }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 500px;
+      display: flex; background: #111; border-top: 1px solid #222; padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+    .nav-item {
+      flex: 1; text-align: center; padding: 6px; color: #555; font-size: 11px; cursor: pointer;
+    }
+    .nav-item.active { color: #e94560; }
+    .nav-item .n-icon { font-size: 20px; }
+
+    /* Auth Modal */
+    .auth-modal { display: none; }
+    .auth-modal .switch { color: #e94560; text-align: center; margin-top: 10px; font-size: 13px; cursor: pointer; }
+    .auth-modal .error-msg { color: #ff6b6b; font-size: 13px; margin-bottom: 8px; display: none; }
+
+    .hidden { display: none; }
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>💪 Fullstack <span>Fitness</span></h1>
+    <div id="authButtons" class="auth-buttons">
+      <button onclick="showAuth('login')">Login</button>
+      <button onclick="showAuth('register')">Registrieren</button>
+    </div>
+    <div id="userInfo" class="user-info">
+      <span id="usernameDisplay"></span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Quote -->
+  <div class="quote-card">
+    <div class="q-text" id="quoteText">"---"</div>
+    <div class="q-author" id="quoteAuthor">---</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card"><div class="num" id="statWorkouts">0</div><div class="label">Workouts</div></div>
+    <div class="stat-card"><div class="num" id="statDays">0</div><div class="label">Tage</div></div>
+    <div class="stat-card"><div class="num" id="statStreak">0</div><div class="label">🔥 Streak</div></div>
+    <div class="stat-card"><div class="num" id="statMonth">0</div><div class="label">Dieser Monat</div></div>
+  </div>
+
+  <!-- Categories -->
+  <div class="section-title">🏋️ Übungen</div>
+  <div class="cats" id="catContainer"></div>
+
+  <!-- Exercise List -->
+  <div class="section-title">Alle Übungen</div>
+  <div class="ex-list" id="exContainer"></div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal-overlay" id="progressModal">
+  <div class="modal">
+    <h2 id="progressTitle">Tracke: Bankdrücken</h2>
+    <div class="row">
+      <input type="number" id="trackSets" placeholder="Sätze" min="1">
+      <input type="number" id="trackReps" placeholder="Wiederholungen" min="1">
+    </div>
+    <div class="row">
+      <input type="number" id="trackWeight" placeholder="Gewicht (kg)" min="0" step="0.5">
+      <input type="text" id="trackNotes" placeholder="Notizen" style="flex:1">
+    </div>
+    <button onclick="saveProgress()">Speichern ✅</button>
+    <button class="cancel-btn" onclick="closeProgress()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <h2 id="authTitle">Login</h2>
+    <div class="error-msg" id="authError"></div>
+    <div id="loginForm">
+      <input type="text" id="loginUsername" placeholder="Benutzername">
+      <input type="password" id="loginPassword" placeholder="Passwort">
+      <button onclick="login()">Einloggen</button>
+      <div class="switch" onclick="showAuth('register')">Noch kein Konto? Registrieren</div>
+    </div>
+    <div id="registerForm" style="display:none;">
+      <input type="text" id="regUsername" placeholder="Benutzername">
+      <input type="email" id="regEmail" placeholder="Email">
+      <input type="password" id="regPassword" placeholder="Passwort (min. 6 Zeichen)">
+      <button onclick="register()">Registrieren</button>
+      <div class="switch" onclick="showAuth('login')">Schon ein Konto? Einloggen</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let isLoggedIn = false;
+let selectedCategory = 'Alle';
+let allExercises = [];
+let currentExerciseId = null;
+
+// ====== INIT ======
+async function init() {
+  await loadQuote();
+  await loadExercises();
+  renderCategories();
+  renderExercises('Alle');
+  await checkAuth();
+}
+
+// ====== QUOTE ======
+async function loadQuote() {
+  const res = await fetch('/api/quote');
+  const q = await res.json();
+  document.getElementById('quoteText').textContent = '"' + q.text + '"';
+  document.getElementById('quoteAuthor').textContent = '— ' + q.author;
+}
+
+// ====== EXERCISES ======
+async function loadExercises() {
+  const res = await fetch('/api/exercises');
+  allExercises = await res.json();
+}
+
+function renderExercises(cat) {
+  const filtered = cat === 'Alle' ? allExercises : allExercises.filter(e => e.category === cat);
+  const container = document.getElementById('exContainer');
+  container.innerHTML = '';
+  filtered.forEach(ex => {
+    container.innerHTML += `
+      <div class="ex-card">
+        <div class="icon">${ex.icon}</div>
+        <div class="info">
+          <h3>${ex.name}</h3>
+          <p>${ex.category}</p>
+          <div class="specs">${ex.sets} × ${ex.reps}</div>
+        </div>
+        <button class="track-btn" onclick="openProgress(${ex.id}, '${ex.name}')">Track</button>
+      </div>
+    `;
+  });
+}
+
+function renderCategories() {
+  const cats = ['Alle', ...new Set(allExercises.map(e => e.category))];
+  const container = document.getElementById('catContainer');
+  container.innerHTML = '';
+  cats.forEach(c => {
+    const btn = document.createElement('div');
+    btn.className = 'cat-btn' + (c === selectedCategory ? ' active' : '');
+    btn.textContent = c;
+    btn.onclick = () => {
+      selectedCategory = c;
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderExercises(c);
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ====== PROGRESS TRACKING ======
+function openProgress(id, name) {
+  if (!isLoggedIn) { showAuth('login'); return; }
+  currentExerciseId = id;
+  document.getElementById('progressTitle').textContent = 'Tracke: ' + name;
+  document.getElementById('trackSets').value = 4;
+  document.getElementById('trackReps').value = 10;
+  document.getElementById('trackWeight').value = 0;
+  document.getElementById('trackNotes').value = '';
+  document.getElementById('progressModal').classList.add('show');
+}
+
+function closeProgress() {
+  document.getElementById('progressModal').classList.remove('show');
+}
+
+async function saveProgress() {
+  const data = {
+    exerciseId: currentExerciseId,
+    sets: parseInt(document.getElementById('trackSets').value) || 0,
+    reps: parseInt(document.getElementById('trackReps').value) || 0,
+    weight: parseFloat(document.getElementById('trackWeight').value) || 0,
+    notes: document.getElementById('trackNotes').value
+  };
+
+  await fetch('/api/progress', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  closeProgress();
+  loadStats();
+}
+
+// ====== STATS ======
+async function loadStats() {
+  if (!isLoggedIn) return;
+  const res = await fetch('/api/stats');
+  const s = await res.json();
+  document.getElementById('statWorkouts').textContent = s.totalWorkouts;
+  document.getElementById('statDays').textContent = s.trainingDays;
+  document.getElementById('statStreak').textContent = s.streak;
+  document.getElementById('statMonth').textContent = s.thisMonth;
+}
+
+// ====== AUTH ======
+async function checkAuth() {
+  const res = await fetch('/api/me');
+  const data = await res.json();
+  if (data.loggedIn) {
+    isLoggedIn = true;
+    document.getElementById('authButtons').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'flex';
+    document.getElementById('usernameDisplay').textContent = '👤 ' + data.user.username;
+    loadStats();
+  }
+}
+
+function showAuth(type) {
+  document.getElementById('authModal').classList.add('show');
+  document.getElementById('authError').style.display = 'none';
+  if (type === 'login') {
+    document.getElementById('authTitle').textContent = 'Login';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+  } else {
+    document.getElementById('authTitle').textContent = 'Registrieren';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+  }
+}
+
+function closeAuth() { document.getElementById('authModal').classList.remove('show'); }
+
+async function login() {
+  const username = document.getElementById('loginUsername').value;
+  const password = document.getElementById('loginPassword').value;
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (data.error) {
+    document.getElementById('authError').textContent = data.error;
+    document.getElementById('authError').style.display = 'block';
+    return;
+  }
+  closeAuth();
+  checkAuth();
+}
+
+async function register() {
+  const username = document.getElementById('regUsername').value;
+  const email = document.getElementById('regEmail').value;
+  const password = document.getElementById('regPassword').value;
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password })
+  });
+  const data = await res.json();
+  if (data.error) {
+    document.getElementById('authError').textContent = data.error;
+    document.getElementById('authError').style.display = 'block';
+    return;
+  }
+  closeAuth();
+  checkAuth();
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  isLoggedIn = false;
+  document.getElementById('authButtons').style.display = 'flex';
+  document.getElementById('userInfo').style.display = 'none';
+  document.getElementById('statWorkouts').textContent = '0';
+  document.getElementById('statDays').textContent = '0';
+  document.getElementById('statStreak').textContent = '0';
+  document.getElementById('statMonth').textContent = '0';
+}
+
+// ====== START ======
+init();
+</script>
+</body>
+</html>
